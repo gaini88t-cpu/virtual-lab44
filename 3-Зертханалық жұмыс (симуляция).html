@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3-зертханалық жұмыс — Биологиялық нысандарда нәруыздың болуын анықтау</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ecfdf5;
+            color: #0f172a;
+        }
+
+        /* Сынауық және сұйықтық визуализациясы */
+        .tube-glass {
+            background: linear-gradient(90deg, rgba(255,255,255,0.48) 0%, rgba(255,255,255,0.08) 30%, rgba(255,255,255,0.05) 70%, rgba(255,255,255,0.36) 100%);
+            box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.65), 0 8px 20px rgba(15, 23, 42, 0.35);
+            border: 2.5px solid #94a3b8;
+            border-top: none;
+            border-bottom-left-radius: 9999px;
+            border-bottom-right-radius: 9999px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tube-rim {
+            width: 118%;
+            left: -9%;
+            height: 7px;
+            background: #cbd5e1;
+            border: 1.5px solid #64748b;
+            border-radius: 9999px;
+            position: absolute;
+            top: -3px;
+            z-index: 25;
+        }
+
+        .liquid-main {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            transition: height 0.7s ease, background-color 1s ease, opacity 0.8s ease;
+            border-bottom-left-radius: 9999px;
+            border-bottom-right-radius: 9999px;
+            z-index: 4;
+        }
+
+        .precipitate-layer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 0%;
+            transition: height 1.1s ease-in-out, background-color 0.9s ease, opacity 0.8s ease;
+            border-bottom-left-radius: 9999px;
+            border-bottom-right-radius: 9999px;
+            z-index: 8;
+        }
+
+        .precipitate-layer.pbs-dark {
+            background: radial-gradient(circle at 25% 35%, #1e293b 2.5px, transparent 3.5px),
+                        radial-gradient(circle at 65% 55%, #020617 3px, transparent 4px),
+                        radial-gradient(circle at 45% 75%, #0f172a 2.5px, transparent 3.5px),
+                        #090d16;
+            background-size: 14px 14px;
+        }
+
+        .precipitate-layer.yellow-coag {
+            background: radial-gradient(circle at 30% 45%, #fef08a 2px, transparent 3px),
+                        radial-gradient(circle at 70% 60%, #facc15 2.5px, transparent 3.5px),
+                        rgba(234, 179, 8, 0.88);
+            background-size: 15px 15px;
+        }
+
+        @keyframes shakeTube {
+            0%, 100% { transform: rotate(0deg); }
+            20% { transform: rotate(-14deg); }
+            40% { transform: rotate(14deg); }
+            60% { transform: rotate(-10deg); }
+            80% { transform: rotate(10deg); }
+        }
+        .shaking {
+            animation: shakeTube 0.72s ease-in-out;
+        }
+
+        @keyframes dropFall {
+            0% { top: 8px; opacity: 1; transform: scale(0.8); }
+            85% { opacity: 1; transform: scale(1.05); }
+            100% { top: 135px; opacity: 0; transform: scale(1.2); }
+        }
+        .drop-anim {
+            position: absolute;
+            left: 50%;
+            margin-left: -5px;
+            width: 10px;
+            height: 14px;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            z-index: 20;
+            pointer-events: none;
+            animation: dropFall 0.65s ease-in forwards;
+        }
+
+        @keyframes flameFlicker {
+            0%, 100% { transform: scale(1) rotate(-1.5deg); opacity: 0.95; }
+            50% { transform: scale(1.08, 1.15) rotate(2deg); opacity: 1; }
+        }
+        .flame-flicker {
+            animation: flameFlicker 0.35s infinite alternate ease-in-out;
+            transform-origin: bottom center;
+        }
+
+        @keyframes boilBubble {
+            0% { bottom: 6px; opacity: 0.85; transform: scale(0.6); }
+            100% { bottom: 95px; opacity: 0; transform: scale(1.25); }
+        }
+        .boil-bubble {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            z-index: 14;
+            animation: boilBubble 1s infinite ease-in;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Жоғарғы тақырып -->
+    <header class="bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-900 text-white shadow-lg border-b border-emerald-700">
+        <div class="max-w-7xl mx-auto px-4 py-3.5 sm:px-6 lg:px-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div>
+                <div class="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-200">
+                    <span class="bg-emerald-800/80 border border-emerald-500/60 px-2.5 py-0.5 rounded-full">11-сынып • Биология</span>
+                    <span>Виртуалды зертхана</span>
+                </div>
+                <h1 class="text-base sm:text-xl font-extrabold mt-1 leading-snug">
+                    3-зертханалық жұмыс. Биологиялық нысандарда нәруыздың болуын анықтау
+                </h1>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="bg-slate-950/60 p-1 rounded-xl border border-emerald-600/50 flex items-center">
+                    <button onclick="switchMode('student')" id="btn-mode-student" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-emerald-400 text-slate-950 shadow transition">
+                        Оқушы режимі
+                    </button>
+                    <button onclick="switchMode('teacher')" id="btn-mode-teacher" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-emerald-100 hover:text-white transition">
+                        Мұғалім режимі
+                    </button>
+                </div>
+                <button onclick="openModal('guideModal')" class="bg-teal-700 hover:bg-teal-600 text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl border border-teal-500 transition">
+                    Реактивтер мен құралдар
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===================================================================== -->
+    <!-- 1. ОҚУШЫ РЕЖИМІ                                                       -->
+    <!-- ===================================================================== -->
+    <main id="studentMode" class="flex-1 max-w-7xl w-full mx-auto px-4 py-5 sm:px-6 lg:px-8 space-y-6">
+
+        <!-- Оқушы мәліметтері және Прогресс -->
+        <section class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-emerald-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 max-w-xl">
+                <div>
+                    <label for="studentFullName" class="block text-xs font-bold text-slate-600 mb-1">Оқушының аты-жөні:</label>
+                    <input type="text" id="studentFullName" placeholder="Мысалы: Серікова Айдана" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label for="studentClassName" class="block text-xs font-bold text-slate-600 mb-1">Сыныбы:</label>
+                    <input type="text" id="studentClassName" value="11 «Б»" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2.5 bg-emerald-50 px-4 py-3 rounded-xl border border-emerald-200">
+                <div class="flex flex-wrap items-center gap-1.5">
+                    <span id="badgeExp" class="bg-emerald-700 text-white text-xs font-bold px-2.5 py-1 rounded-full">Реакция: 0/4</span>
+                    <span id="badgeTable" class="bg-teal-700 text-white text-xs font-bold px-2.5 py-1 rounded-full">Кесте: 0/4</span>
+                    <span id="badgeQuiz" class="bg-slate-800 text-white text-xs font-bold px-2.5 py-1 rounded-full">Тест: 0/5</span>
+                </div>
+                <button onclick="openSubmissionModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition ml-auto">
+                    Нәтижені жіберу / Код
+                </button>
+            </div>
+        </section>
+
+        <!-- 4 түсті реакция арасында ауысу -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+            <button onclick="selectReaction(1)" id="rxn-tab-1" class="rxn-tab p-3.5 rounded-2xl border-2 border-emerald-600 bg-emerald-600 text-white text-left shadow-sm transition">
+                <div class="flex items-center justify-between text-xs font-bold opacity-90">
+                    <span>1-ТӘЖІРИБЕ</span>
+                    <span id="rxn-st-1" class="bg-white/20 px-2 py-0.5 rounded-full">Белсенді</span>
+                </div>
+                <div class="font-extrabold text-sm mt-1">Биурет реакциясы</div>
+                <div class="text-xs opacity-90 mt-0.5">Пептидтік байланыс (–CO–NH–)</div>
+            </button>
+
+            <button onclick="selectReaction(2)" id="rxn-tab-2" class="rxn-tab p-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-emerald-400 text-slate-800 text-left shadow-sm transition">
+                <div class="flex items-center justify-between text-xs font-bold text-emerald-700">
+                    <span>2-ТӘЖІРИБЕ</span>
+                    <span id="rxn-st-2" class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Күтілуде</span>
+                </div>
+                <div class="font-extrabold text-sm mt-1">Ксантопротеин реакциясы</div>
+                <div class="text-xs text-slate-500 mt-0.5">Ароматты аминқышқылдары</div>
+            </button>
+
+            <button onclick="selectReaction(3)" id="rxn-tab-3" class="rxn-tab p-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-emerald-400 text-slate-800 text-left shadow-sm transition">
+                <div class="flex items-center justify-between text-xs font-bold text-emerald-700">
+                    <span>3-ТӘЖІРИБЕ</span>
+                    <span id="rxn-st-3" class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Күтілуде</span>
+                </div>
+                <div class="font-extrabold text-sm mt-1">Фоль реакциясы</div>
+                <div class="text-xs text-slate-500 mt-0.5">Күкіртті аминқышқылдары (PbS)</div>
+            </button>
+
+            <button onclick="selectReaction(4)" id="rxn-tab-4" class="rxn-tab p-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-emerald-400 text-slate-800 text-left shadow-sm transition">
+                <div class="flex items-center justify-between text-xs font-bold text-emerald-700">
+                    <span>4-ТӘЖІРИБЕ</span>
+                    <span id="rxn-st-4" class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Күтілуде</span>
+                </div>
+                <div class="font-extrabold text-sm mt-1">Нингидриндеу реакциясы</div>
+                <div class="text-xs text-slate-500 mt-0.5">α-аминтоптар (–NH₂)</div>
+            </button>
+        </div>
+
+        <!-- НЕГІЗГІ ЗЕРТХАНАЛЫҚ САХНА: Басқару + Сынауық + Молекулалық схема -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Сол жақ: Реактивтер мен әрекеттер (4 баған) -->
+            <div class="lg:col-span-4 bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-between space-y-4">
+                <div id="reactionControls" class="space-y-3.5">
+                    <!-- JS арқылы толтырылады -->
+                </div>
+
+                <div class="pt-3 border-t border-slate-200 flex items-center justify-between">
+                    <button onclick="resetCurrentReaction()" class="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-2 rounded-xl transition">
+                        Сынауықты тазалау
+                    </button>
+                    <span id="timerBadge" class="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
+                        Уақыт: 0 с
+                    </span>
+                </div>
+            </div>
+
+            <!-- Ортаңғы баған: Сынауықтағы реакция анимациясы (4 баған) -->
+            <div class="lg:col-span-4 bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 rounded-2xl p-5 shadow-lg border border-slate-700 text-white flex flex-col justify-between min-h-[430px]">
+                <div class="flex items-center justify-between border-b border-slate-700 pb-2.5">
+                    <div>
+                        <span class="text-[11px] uppercase tracking-wider text-emerald-400 font-bold">Сынауықтағы бақылау</span>
+                        <h3 id="tubeHeaderTitle" class="text-sm font-bold text-white">1-тапсырма: Биурет реакциясы</h3>
+                    </div>
+                    <span id="tubeTempTag" class="text-xs font-mono bg-slate-800 border border-slate-600 px-2.5 py-1 rounded-lg text-cyan-300">
+                        20 °C
+                    </span>
+                </div>
+
+                <!-- Сынауық және Спиртшам/Су моншасы -->
+                <div class="relative flex-1 flex flex-col items-center justify-center my-3" id="tubeScene">
+                    <div id="tubeWrapper" class="relative w-16 h-44 flex items-center justify-center">
+                        <div class="tube-rim"></div>
+                        <div id="testTubeGlass" class="tube-glass w-full h-full">
+                            <div id="liquidMain" class="liquid-main" style="height: 0%; background-color: transparent;"></div>
+                            <div id="precipitateLayer" class="precipitate-layer" style="height: 0%;"></div>
+                            <div id="bubblesLayer" class="absolute inset-0 pointer-events-none"></div>
+                        </div>
+                    </div>
+
+                    <!-- Спиртшам -->
+                    <div class="mt-3 flex flex-col items-center">
+                        <div id="spiritFlame" class="hidden flame-flicker w-7 h-10 bg-gradient-to-t from-blue-600 via-amber-400 to-yellow-200 rounded-full -mb-1"></div>
+                        <div class="w-24 h-7 bg-slate-300 rounded-t-xl border border-slate-500 flex items-center justify-center">
+                            <span class="text-[9px] font-bold text-slate-800 uppercase">Спиртшам</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Түс пен құбылыс сипаттамасы -->
+                <div class="bg-slate-800/90 border border-slate-700 rounded-xl p-3.5">
+                    <span class="text-[11px] font-bold uppercase text-amber-400 block">Бақыланатын құбылыс:</span>
+                    <p id="tubeObservationText" class="text-xs sm:text-sm text-slate-100 mt-1 leading-relaxed">
+                        Сынауық бос. Жұмысты бастау үшін жұмыртқа нәруызының ерітіндісін тамызыңыз.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Оң жақ баған: Нәруыз полипептидтік тізбегі мен молекулалық схемасы (4 баған) -->
+            <div class="lg:col-span-4 bg-slate-900 rounded-2xl p-5 shadow-lg border border-emerald-800/70 text-white flex flex-col justify-between min-h-[430px]">
+                <div class="flex items-center justify-between border-b border-slate-700 pb-2.5">
+                    <div>
+                        <span class="text-[11px] uppercase tracking-wider text-teal-400 font-bold">Молекулалық-биологиялық схема</span>
+                        <h3 id="molTargetTitle" class="text-sm font-bold text-white">Пептидтік байланыс (–CO–NH–)</h3>
+                    </div>
+                    <span id="molStatusBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/40">
+                        Бастапқы тізбек
+                    </span>
+                </div>
+
+                <!-- Молекулалық Canvas анимациясы -->
+                <div class="my-3 flex-1 flex flex-col justify-between bg-slate-950/90 rounded-xl border border-slate-800 overflow-hidden">
+                    <canvas id="bioMoleculeCanvas" class="w-full h-52 block"></canvas>
+                    <div id="chemicalFormulaBanner" class="px-3 py-2 bg-slate-900 border-t border-slate-800 font-mono text-[11px] text-emerald-300 text-center">
+                        –NH–CH(R₁)–CO–NH–CH(R₂)–CO–
+                    </div>
+                </div>
+
+                <!-- Биологиялық маңызы -->
+                <div class="bg-emerald-950/60 border border-emerald-800/80 rounded-xl p-3.5">
+                    <span class="text-[11px] font-bold uppercase text-emerald-300 block">Биологиялық мәні:</span>
+                    <p id="bioMeaningText" class="text-xs text-slate-200 mt-1 leading-relaxed">
+                        Полипептидтік тізбектің ұзындығы мен аминқышқылдық құрамы нәруыздың кеңістіктік пішінін және биологиялық қызметін анықтайды.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- НӘТИЖЕЛЕРДІ РӘСІМДЕУ КЕСТЕСІ (Автоматты тексерумен) -->
+        <section class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                <div>
+                    <h2 class="text-lg font-extrabold text-slate-900">Нәтижелерді рәсімдеу кестесі</h2>
+                    <p class="text-xs sm:text-sm text-slate-500">Жүргізілген 4 түсті реакция бойынша бақылау деректерін толтырып, тексеріңіз.</p>
+                </div>
+                <button onclick="verifyResultsTable()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl shadow-sm transition self-start sm:self-auto">
+                    Кестені тексеру
+                </button>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-200">
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                    <thead>
+                        <tr class="bg-emerald-900 text-white text-xs uppercase">
+                            <th class="py-3 px-3 font-bold">№</th>
+                            <th class="py-3 px-3 font-bold">Реакцияларды жүргізу шарттары</th>
+                            <th class="py-3 px-3 font-bold">Бақыланатын құбылыс</th>
+                            <th class="py-3 px-3 font-bold">Жүргізілетін реакциялар барысы</th>
+                            <th class="py-3 px-3 font-bold">Қорытынды</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTableBody" class="divide-y divide-slate-200">
+                        <!-- JS арқылы 4 жол салынады -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="tableCheckMsg" class="hidden p-3 rounded-xl text-xs sm:text-sm font-semibold"></div>
+        </section>
+
+        <!-- БІЛІМДІ БЕКІТУ ТЕСТІ (5 СҰРАҚ) -->
+        <section class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                <div>
+                    <h2 class="text-lg font-extrabold text-slate-900">Білімді бекіту тесті</h2>
+                    <p class="text-xs sm:text-sm text-slate-500">Түсті реакциялардың құрылымдық ерекшеліктері мен биологиялық рөлін тексеріңіз.</p>
+                </div>
+                <button onclick="evaluateBioQuiz()" class="bg-teal-700 hover:bg-teal-800 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl shadow-sm transition self-start sm:self-auto">
+                    Тестті тексеру
+                </button>
+            </div>
+
+            <div id="bioQuizContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- JS арқылы 5 сұрақ салынады -->
+            </div>
+            <div id="bioQuizResult" class="hidden p-3.5 rounded-xl text-xs sm:text-sm font-semibold"></div>
+        </section>
+
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- 2. МҰҒАЛІМ РЕЖИМІ                                                     -->
+    <!-- ===================================================================== -->
+    <main id="teacherMode" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Мұғалім режимі • Тексеру және Аналитика</span>
+                <h2 class="text-xl font-extrabold text-slate-900 mt-0.5">Сынып бойынша меңгерілу көрсеткіштері және жұмыстарды тексеру</h2>
+                <p class="text-xs sm:text-sm text-slate-500">Оқушы жіберген нәтиже кодын енгізіп, жұмысын тексеруге, қателерді түзетуге және бағалауға болады.</p>
+            </div>
+
+            <!-- Оқушы кодын қабылдау / жүктеу -->
+            <div class="flex flex-wrap items-center gap-2 bg-emerald-50 p-3 rounded-xl border border-emerald-200">
+                <input type="text" id="importCodeInput" placeholder="Оқушы кодын енгізіңіз (BIO3-...)" class="rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-mono bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <button onclick="importStudentCode()" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition">
+                    Қосу / Тексеру
+                </button>
+                <button onclick="downloadClassCSV()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition">
+                    CSV жүктеу
+                </button>
+            </div>
+        </div>
+
+        <!-- SVG Диаграмма + Жиі кездесетін қателерді түзету -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- SVG Бағандық диаграмма (7 баған) -->
+            <div class="lg:col-span-7 bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-base font-bold text-slate-900">Түсті реакциялар бойынша сыныптың меңгеру диаграммасы (%)</h3>
+                    <span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">SVG Визуализация</span>
+                </div>
+                <div class="w-full overflow-x-auto">
+                    <svg id="masterySvgChart" viewBox="0 0 600 250" class="w-full h-60">
+                        <!-- Тор сызықтары -->
+                        <line x1="60" y1="30" x2="570" y2="30" stroke="#e2e8f0" stroke-dasharray="4" />
+                        <line x1="60" y1="80" x2="570" y2="80" stroke="#e2e8f0" stroke-dasharray="4" />
+                        <line x1="60" y1="130" x2="570" y2="130" stroke="#e2e8f0" stroke-dasharray="4" />
+                        <line x1="60" y1="180" x2="570" y2="180" stroke="#e2e8f0" stroke-dasharray="4" />
+                        <line x1="60" y1="205" x2="570" y2="205" stroke="#64748b" stroke-width="1.5" />
+
+                        <text x="15" y="34" font-size="11" fill="#64748b">100%</text>
+                        <text x="20" y="84" font-size="11" fill="#64748b">75%</text>
+                        <text x="20" y="134" font-size="11" fill="#64748b">50%</text>
+                        <text x="20" y="184" font-size="11" fill="#64748b">25%</text>
+                        <text x="26" y="209" font-size="11" fill="#64748b">0%</text>
+
+                        <!-- 1. Биурет (92%) -->
+                        <rect x="95" y="46" width="75" height="159" rx="6" fill="#059669" />
+                        <text x="132" y="40" text-anchor="middle" font-size="12" font-weight="bold" fill="#065f46">92%</text>
+                        <text x="132" y="225" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155">Биурет</text>
+                        <text x="132" y="240" text-anchor="middle" font-size="10" fill="#64748b">–CO–NH–</text>
+
+                        <!-- 2. Ксантопротеин (78%) -->
+                        <rect x="220" y="74" width="75" height="131" rx="6" fill="#0d9488" />
+                        <text x="257" y="68" text-anchor="middle" font-size="12" font-weight="bold" fill="#115e59">78%</text>
+                        <text x="257" y="225" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155">Ксантопротеин</text>
+                        <text x="257" y="240" text-anchor="middle" font-size="10" fill="#64748b">Ароматты</text>
+
+                        <!-- 3. Фоль (84%) -->
+                        <rect x="345" y="62" width="75" height="143" rx="6" fill="#047857" />
+                        <text x="382" y="56" text-anchor="middle" font-size="12" font-weight="bold" fill="#064e3b">84%</text>
+                        <text x="382" y="225" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155">Фоль (PbS)</text>
+                        <text x="382" y="240" text-anchor="middle" font-size="10" fill="#64748b">Цистеин/Цистин</text>
+
+                        <!-- 4. Нингидрин (74%) -->
+                        <rect x="470" y="82" width="75" height="123" rx="6" fill="#0284c7" />
+                        <text x="507" y="76" text-anchor="middle" font-size="12" font-weight="bold" fill="#0369a1">74%</text>
+                        <text x="507" y="225" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155">Нингидрин</text>
+                        <text x="507" y="240" text-anchor="middle" font-size="10" fill="#64748b">α–NH₂ тобы</text>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Қателерді түзету және әдістемелік нұсқау (5 баған) -->
+            <div class="lg:col-span-5 bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-3">
+                <h3 class="text-base font-bold text-slate-900">Қателерді түзету және әдістемелік ескертпе</h3>
+                <div class="space-y-2.5 text-xs sm:text-sm">
+                    <div class="p-3 rounded-xl bg-amber-50 border border-amber-200">
+                        <div class="font-bold text-amber-900">Ксантопротеин реакциясындағы сілті қосу тәртібі</div>
+                        <p class="text-amber-800 mt-0.5">Қыздырып, сары түс алған соң міндетті түрде суытып барып, қабырға бойымен абайлап 30% NaOH қосу қажет.</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                        <div class="font-bold text-emerald-900">Фоль реакциясында қара тұнбаның табиғаты</div>
+                        <p class="text-emerald-800 mt-0.5">Цистеин мен цистиндегі күкірт сілтілік ортада сульфид түзіп, Pb²⁺ ионымен қара түсті қорғасын сульфидін (PbS) береді.</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-sky-50 border border-sky-200">
+                        <div class="font-bold text-sky-900">Нингидрин реакциясының уақыт динамикасы</div>
+                        <p class="text-sky-800 mt-0.5">Қайнағанша қыздырғаннан кейін 2–3 минут өткенде түс ашық қызыл/қызылдан көгілдір күлгін түске ауысады.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Оқушы жұмыстарын бағалау кестесі -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-3">
+            <h3 class="text-base font-bold text-slate-900">Оқушылардың жұмыстарын бағалау және тексеру</h3>
+            <div class="overflow-x-auto rounded-xl border border-slate-200">
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-xs uppercase">
+                            <th class="py-3 px-4 font-bold">Оқушы</th>
+                            <th class="py-3 px-4 font-bold">Сыныбы</th>
+                            <th class="py-3 px-4 font-bold">Тәжірибелер</th>
+                            <th class="py-3 px-4 font-bold">Кесте + Тест</th>
+                            <th class="py-3 px-4 font-bold">Мұғалім бағасы / Түзету</th>
+                            <th class="py-3 px-4 font-bold">Әрекет</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teacherSubmissionsBody" class="divide-y divide-slate-200">
+                        <!-- JS арқылы толтырылады -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Хабарлама (Toast) -->
+    <div id="toastBox" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 text-xs sm:text-sm font-medium flex items-center gap-2.5 max-w-sm">
+            <span id="toastIcon" class="text-emerald-400 font-bold">ℹ</span>
+            <span id="toastMessage">Хабарлама</span>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬДЫ ТЕРЕЗЕ 1: Реактивтер мен құрал-жабдықтар -->
+    <div id="guideModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="text-lg font-extrabold text-emerald-900">Реактивтер мен құрал-жабдықтар (3-зертханалық жұмыс)</h3>
+                <button onclick="closeModal('guideModal')" class="text-slate-400 hover:text-slate-700 p-1">✕</button>
+            </div>
+            <div class="space-y-3 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                <p><strong>Жұмыртқа нәруызының судағы ерітіндісі:</strong> Тауық жұмыртқасының ақуызын сарысынан бөліп, көлемі 15–20 есе артық дистилденген суда ерітіп, 3–4 қабат дәкемен сүзеді.</p>
+                <p><strong>Реактивтер:</strong> 10%-тік NaOH ерітіндісі, 1%-тік мыс сульфаты (CuSO₄), 30%-тік NaOH ерітіндісі, 1%-тік қорғасын ацетаты (Pb(CH₃COO)₂), дәріханалық асқазан сөлі (немесе хилак-форте), 0,5%-тік нингидрин ерітіндісі.</p>
+                <p><strong>Құрал-жабдықтар:</strong> Сынауықтар, су моншасы немесе спиртшам.</p>
+            </div>
+            <div class="flex justify-end">
+                <button onclick="closeModal('guideModal')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2 rounded-xl text-sm">Жабу</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬДЫ ТЕРЕЗЕ 2: Нәтижені жіберу / Алмасу коды -->
+    <div id="submissionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="text-lg font-extrabold text-slate-900">Оқушы — Мұғалім нәтижесін алмасу</h3>
+                <button onclick="closeModal('submissionModal')" class="text-slate-400 hover:text-slate-700 p-1">✕</button>
+            </div>
+            <p class="text-xs text-slate-600">Төмендегі есеп мәтінін немесе алмасу кодын көшіріп, мұғалімге жіберіңіз немесе «Мұғалім режиміне жіберу» арқылы тікелей тіркеңіз.</p>
+            <pre id="submissionTextBox" class="bg-slate-900 text-emerald-300 p-3.5 rounded-xl text-xs font-mono whitespace-pre-wrap overflow-x-auto"></pre>
+            <div class="flex flex-wrap justify-end gap-2">
+                <button onclick="copySubmissionText()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm">Көшіру</button>
+                <button onclick="sendSubmissionToTeacher()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm">Мұғалім режиміне жіберу</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================================
+        // 1. КҮЙ ЖӘНЕ ДЕРЕКТЕР
+        // =====================================================================
+        let activeRxn = 1;
+        const completedRxns = new Set();
+        let tableScore = 0;
+        let quizScore = 0;
+        let elapsedSeconds = 0;
+
+        // Әр реакцияның қадамдық күйі
+        const rxnState = {
+            1: { protein: false, alkali10: false, cuso4: false, mixed: false, done: false },
+            2: { protein: false, gastric: false, heatedYellow: false, cooled: false, alkali30: false, done: false },
+            3: { protein: false, alkali30: false, leadAcetate: false, mixed: false, boiled: false, done: false },
+            4: { protein1pct: false, ninhydrin: false, boiled: false, aged: false, done: false }
+        };
+
+        // Молекулалық анимация режимі ('peptide', 'biuret_violet', 'aromatic_yellow', 'aromatic_orange', 'sulfur_black', 'ninhydrin_red', 'ninhydrin_violet')
+        let molAnimMode = 'peptide';
+
+        // 5 тест сұрағы
+        const BIO_QUIZ = [
+            {
+                id: 'bq1',
+                q: '1. Биурет реакциясы (10% NaOH + 1–2 тамшы CuSO₄) нәруыз молекуласының қандай құрылымдық бөлігін анықтайды?',
+                options: [
+                    'Пептидтік байланыстарды (–CO–NH–), түстің қанықтығы тізбек ұзындығына байланысты',
+                    'Тек бос карбоксил тобын (–COOH)',
+                    'Моносахаридтік қалдықтарды'
+                ],
+                correct: 0
+            },
+            {
+                id: 'bq2',
+                q: '2. Ксантопротеин реакциясы қай аминқышқылдарының болуын көрсетеді?',
+                options: [
+                    'Ароматты аминқышқылдары (фенилаланин, тирозин, триптофан)',
+                    'Тек глицин мен аланин',
+                    'Тек күкіртті аминқышқылдары'
+                ],
+                correct: 0
+            },
+            {
+                id: 'bq3',
+                q: '3. Фоль реакциясында қыздырып қайнатқанда қара немесе қара қошқыл тұнба (PbS) қандай аминқышқылдарының есебінен түзіледі?',
+                options: [
+                    'Цистеин және цистин (күкіртті аминқышқылдарының сілтілік гидролизіндегі сульфидтен)',
+                    'Валин және лейцин',
+                    'Серин және треонин'
+                ],
+                correct: 0
+            },
+            {
+                id: 'bq4',
+                q: '4. Нингидриндеу реакциясы нәруыз молекуласындағы қандай топтарға негізделген?',
+                options: [
+                    'α-күйіндегі аминтоптарға (α-аминтоптар)',
+                    'Дисульфидтік көпірлерге (–S–S–)',
+                    'Фосфодиэфирлік байланыстарға'
+                ],
+                correct: 0
+            },
+            {
+                id: 'bq5',
+                q: '5. Түсті реакцияларды қолданудың биология және медицина үшін маңызы неде?',
+                options: [
+                    'Биологиялық сұйықтықтар мен нысандарда нәруыздардың және белгілі аминқышқылдық қалдықтардың бар-жоғын жылдам анықтауға мүмкіндік береді',
+                    'Нәруыздарды майға айналдырады',
+                    'ДНҚ-ның репликациясын тоқтатады'
+                ],
+                correct: 0
+            }
+        ];
+
+        // Мұғалім панеліндегі сынып журналы
+        const TEACHER_STUDENTS = [
+            { name: 'Ахметова Динара', cls: '11 «Б»', rxns: '4/4', pts: '9/9', grade: '5 (95%)', note: 'Өте жақсы' },
+            { name: 'Оспанов Темірлан', cls: '11 «Б»', rxns: '4/4', pts: '8/9', grade: '5 (89%)', note: 'Нингидрин уақытын нақтылау' },
+            { name: 'Сапарбекова Әсел', cls: '11 «Б»', rxns: '3/4', pts: '6/9', grade: '4 (67%)', note: '3-тәжірибені аяқтау керек' },
+            { name: 'Кәрімов Әділет', cls: '11 «Б»', rxns: '4/4', pts: '7/9', grade: '4 (78%)', note: 'Ксантопротеинде сілтіні суытып құю' }
+        ];
+
+        // =====================================================================
+        // 2. КӨМЕКШІ ФУНКЦИЯЛАР ЖӘНЕ ТАЙМЕР
+        // =====================================================================
+        setInterval(() => {
+            elapsedSeconds++;
+            const el = document.getElementById('timerBadge');
+            if (el) el.textContent = `Уақыт: ${elapsedSeconds} с`;
+        }, 1000);
+
+        let toastTimer = null;
+        function showToast(msg, type = 'info') {
+            const box = document.getElementById('toastBox');
+            const icon = document.getElementById('toastIcon');
+            document.getElementById('toastMessage').textContent = msg;
+            icon.textContent = type === 'warn' ? '⚠' : (type === 'success' ? '✓' : 'ℹ');
+            icon.className = type === 'warn' ? 'text-amber-400 font-bold' : (type === 'success' ? 'text-emerald-400 font-bold' : 'text-teal-400 font-bold');
+            box.classList.remove('translate-y-20', 'opacity-0');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => box.classList.add('translate-y-20', 'opacity-0'), 3400);
+        }
+
+        function openModal(id) {
+            const m = document.getElementById(id);
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+        function closeModal(id) {
+            const m = document.getElementById(id);
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function switchMode(mode) {
+            const sMode = document.getElementById('studentMode');
+            const tMode = document.getElementById('teacherMode');
+            const bS = document.getElementById('btn-mode-student');
+            const bT = document.getElementById('btn-mode-teacher');
+
+            if (mode === 'student') {
+                sMode.classList.remove('hidden');
+                tMode.classList.add('hidden');
+                bS.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-emerald-400 text-slate-950 shadow transition';
+                bT.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-emerald-100 hover:text-white transition';
+            } else {
+                sMode.classList.add('hidden');
+                tMode.classList.remove('hidden');
+                bT.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-emerald-400 text-slate-950 shadow transition';
+                bS.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-emerald-100 hover:text-white transition';
+                renderTeacherTable();
+            }
+        }
+
+        function spawnDrop(color) {
+            const wrap = document.getElementById('tubeWrapper');
+            if (!wrap) return;
+            const d = document.createElement('div');
+            d.className = 'drop-anim';
+            d.style.backgroundColor = color;
+            wrap.appendChild(d);
+            setTimeout(() => d.remove(), 700);
+        }
+
+        function igniteFlame(durationMs = 1800) {
+            const flame = document.getElementById('spiritFlame');
+            const bubbles = document.getElementById('bubblesLayer');
+            const tempTag = document.getElementById('tubeTempTag');
+            if (flame) flame.classList.remove('hidden');
+            if (tempTag) {
+                tempTag.textContent = 'Қызуда (~85 °C)';
+                tempTag.className = 'text-xs font-mono bg-orange-950 border border-orange-500 px-2.5 py-1 rounded-lg text-orange-300';
+            }
+            if (bubbles) {
+                bubbles.innerHTML = '';
+                for (let i = 0; i < 10; i++) {
+                    const b = document.createElement('div');
+                    b.className = 'boil-bubble';
+                    b.style.left = (20 + Math.random() * 60) + '%';
+                    b.style.animationDelay = (Math.random() * 0.8) + 's';
+                    bubbles.appendChild(b);
+                }
+            }
+            setTimeout(() => {
+                if (flame) flame.classList.add('hidden');
+                if (bubbles) bubbles.innerHTML = '';
+                if (tempTag) {
+                    tempTag.textContent = '20 °C';
+                    tempTag.className = 'text-xs font-mono bg-slate-800 border border-slate-600 px-2.5 py-1 rounded-lg text-cyan-300';
+                }
+            }, durationMs);
+        }
+
+        function markRxnCompleted(num) {
+            completedRxns.add(num);
+            document.getElementById('badgeExp').textContent = `Реакция: ${completedRxns.size}/4`;
+            const st = document.getElementById(`rxn-st-${num}`);
+            if (st) st.textContent = 'Орындалды ✓';
+        }
+
+        // =====================================================================
+        // 3. 4 ТҮСТІ РЕАКЦИЯНЫ БАСҚАРУ ЖӘНЕ ВИЗУАЛИЗАЦИЯ
+        // =====================================================================
+        function selectReaction(num) {
+            activeRxn = num;
+            [1, 2, 3, 4].forEach(i => {
+                const tab = document.getElementById(`rxn-tab-${i}`);
+                const st = document.getElementById(`rxn-st-${i}`);
+                if (i === num) {
+                    tab.className = 'rxn-tab p-3.5 rounded-2xl border-2 border-emerald-600 bg-emerald-600 text-white text-left shadow-sm transition';
+                    st.className = 'bg-white/25 text-white px-2 py-0.5 rounded-full';
+                } else {
+                    tab.className = 'rxn-tab p-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-emerald-400 text-slate-800 text-left shadow-sm transition';
+                    st.className = completedRxns.has(i)
+                        ? 'bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full'
+                        : 'bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full';
+                }
+            });
+            renderReactionScene();
+        }
+
+        function resetCurrentReaction() {
+            if (activeRxn === 1) rxnState[1] = { protein: false, alkali10: false, cuso4: false, mixed: false, done: false };
+            if (activeRxn === 2) rxnState[2] = { protein: false, gastric: false, heatedYellow: false, cooled: false, alkali30: false, done: false };
+            if (activeRxn === 3) rxnState[3] = { protein: false, alkali30: false, leadAcetate: false, mixed: false, boiled: false, done: false };
+            if (activeRxn === 4) rxnState[4] = { protein1pct: false, ninhydrin: false, boiled: false, aged: false, done: false };
+            renderReactionScene();
+            showToast('Сынауық тазаланды.', 'info');
+        }
+
+        function renderReactionScene() {
+            const ctrl = document.getElementById('reactionControls');
+            const title = document.getElementById('tubeHeaderTitle');
+            const obs = document.getElementById('tubeObservationText');
+            const liquid = document.getElementById('liquidMain');
+            const precip = document.getElementById('precipitateLayer');
+            const molTitle = document.getElementById('molTargetTitle');
+            const molBadge = document.getElementById('molStatusBadge');
+            const formula = document.getElementById('chemicalFormulaBanner');
+            const bioText = document.getElementById('bioMeaningText');
+
+            precip.className = 'precipitate-layer';
+            precip.style.height = '0%';
+
+            if (activeRxn === 1) {
+                const s = rxnState[1];
+                title.textContent = '1-тапсырма: Биурет реакциясы';
+                molTitle.textContent = 'Пептидтік байланыс (–CO–NH–)';
+                formula.textContent = '–CO–NH– + Cu²⁺ (сілтілік орта) → Қызыл күлгін мыс-пептид кешені';
+                bioText.textContent = 'Биурет реакциясы полипептидтік тізбектің бар екенін дәлелдейді; түстің қанықтығы нәруыз тізбегінің ұзындығына байланысты.';
+
+                ctrl.innerHTML = `
+                    <div>
+                        <span class="text-xs font-bold uppercase text-emerald-700">1-тәжірибе: Биурет реакциясы</span>
+                        <p class="text-xs text-slate-600 mt-1">Сілтілік ортада пептидтік байланыстар мыс (II) ионымен қызыл күлгін түс береді.</p>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="rxn1Step('protein')" class="w-full p-2.5 rounded-xl border ${s.protein ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'bg-slate-50 border-slate-300 hover:border-emerald-500'} text-left text-xs font-bold flex justify-between">
+                            <span>1) 5 тамшы жұмыртқа нәруызы ерітіндісі</span>
+                            <span>${s.protein ? '✓' : '+ Құю'}</span>
+                        </button>
+                        <button onclick="rxn1Step('alkali10')" class="w-full p-2.5 rounded-xl border ${s.alkali10 ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'bg-slate-50 border-slate-300 hover:border-emerald-500'} text-left text-xs font-bold flex justify-between">
+                            <span>2) 10 тамшы 10%-тік NaOH қосу</span>
+                            <span>${s.alkali10 ? '✓' : '+ Қосу'}</span>
+                        </button>
+                        <button onclick="rxn1Step('cuso4')" class="w-full p-2.5 rounded-xl border ${s.cuso4 ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'bg-slate-50 border-slate-300 hover:border-emerald-500'} text-left text-xs font-bold flex justify-between">
+                            <span>3) 1–2 тамшы 1%-тік CuSO₄ қосу</span>
+                            <span>${s.cuso4 ? '✓' : '+ Тамызу'}</span>
+                        </button>
+                        <button onclick="rxn1Step('mix')" class="w-full p-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow-sm transition">
+                            4) Қоспаны араластыру
+                        </button>
+                    </div>
+                `;
+
+                if (!s.protein) {
+                    liquid.style.height = '0%';
+                    obs.textContent = 'Сынауық бос. Алдымен 5 тамшы жұмыртқа нәруызы ерітіндісін құйыңыз.';
+                    molAnimMode = 'peptide';
+                    molBadge.textContent = 'Пептидтік тізбек';
+                } else if (!s.alkali10) {
+                    liquid.style.height = '32%';
+                    liquid.style.backgroundColor = 'rgba(224, 242, 254, 0.35)';
+                    obs.textContent = 'Жұмыртқа нәруызы ерітіндісі құйылды. Енді 10 тамшы 10%-тік NaOH қосыңыз.';
+                    molAnimMode = 'peptide';
+                } else if (!s.cuso4) {
+                    liquid.style.height = '50%';
+                    liquid.style.backgroundColor = 'rgba(224, 242, 254, 0.45)';
+                    obs.textContent = '10%-тік сілті қосылды. Енді 1–2 тамшы 1%-тік CuSO₄ тамызыңыз.';
+                    molAnimMode = 'peptide';
+                } else if (!s.mixed) {
+                    liquid.style.height = '56%';
+                    liquid.style.backgroundColor = 'rgba(147, 51, 234, 0.45)';
+                    obs.textContent = 'CuSO₄ тамызылды. Түстің толық айқындалуы үшін «Қоспаны араластыру» батырмасын басыңыз.';
+                    molAnimMode = 'peptide';
+                } else {
+                    liquid.style.height = '56%';
+                    liquid.style.backgroundColor = 'rgba(162, 28, 175, 0.85)';
+                    obs.textContent = 'Айқын ҚЫЗЫЛ КҮЛГІН түс пайда болды! Бұл зерттелетін нысанда пептидтік байланыстар (–CO–NH–) бар екенін дәлелдейді.';
+                    molAnimMode = 'biuret_violet';
+                    molBadge.textContent = 'Күлгін кешен түзілді';
+                }
+            }
+
+            if (activeRxn === 2) {
+                const s = rxnState[2];
+                title.textContent = '2-тапсырма: Ксантопротеин реакциясы';
+                molTitle.textContent = 'Ароматты аминқышқылдары';
+                formula.textContent = 'Ароматты сақина (Фен, Тир, Трип) + HNO₃/асқазан сөлі → Сары → 30% NaOH → Қызғылт-сары';
+                bioText.textContent = 'Фенилаланин, тирозин және триптофан сияқты ароматты аминқышқылдары нәруыз глобуласының ядросын тұрақтандыруға қатысады.';
+
+                ctrl.innerHTML = `
+                    <div>
+                        <span class="text-xs font-bold uppercase text-emerald-700">2-тәжірибе: Ксантопротеин реакциясы</span>
+                        <div class="mt-1 p-2 rounded-lg bg-rose-50 border border-rose-200 text-[11px] text-rose-800 font-semibold">
+                            ⚠ Аса сақтықпен орындаңыз! 30% NaOH-ты суытқаннан кейін қабырға бойымен қосыңыз.
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="rxn2Step('protein')" class="w-full p-2 rounded-xl border ${s.protein ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'bg-slate-50 border-slate-300 hover:border-emerald-500'} text-left text-xs font-bold flex justify-between">
+                            <span>1) 5 тамшы жұмыртқа нәруызы ерітіндісі</span>
+                            <span>${s.protein ? '✓' : '+ Құю'}</span>
+                        </button>
+                        <button onclick="rxn2Step('gastric')" class="w-full p-2 rounded-xl border ${s.gastric ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'bg-slate-50 border-slate-300 hover:border-emerald-500'} text-left text-xs font-bold flex justify-between">
+                            <span>2) Қабырғамен 3–4 тамшы асқазан сөлі</span>
+                            <span>${s.gastric ? '✓' : '+ Қосу'}</span>
+                        </button>
+                        <button onclick="rxn2Step('heat')" class="w-full p-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition">
+                            3) Аса сақтықпен қыздыру (Сары түс)
+                        </button>
+                        <button onclick="rxn2Step('alkali30')" class="w-full p-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition">
+                            4) Суытып, қабырғамен 10 тамшы 30% NaOH
+                        </button>
+                    </div>
+                `;
+
+                if (!s.protein) {
+                    liquid.style.height = '0%';
+                    obs.textContent = 'Сынауық бос. Алдымен 5 тамшы жұмыртқа нәруызы ерітіндісін құйыңыз.';
+                    molAnimMode = 'peptide';
+                    molBadge.textContent = 'Ароматты қалдықтар';
+                } else if (!s.gastric) {
+                    liquid.style.height = '32%';
+                    liquid.style.backgroundColor = 'rgba(224, 242, 254, 0.35)';
+                    obs.textContent = 'Нәруыз ерітіндісі құйылды. Қабырғасымен 3–4 тамшы асқазан сөлін (немесе хилак-форте) қосыңыз.';
+                } else if (!s.heatedYellow) {
+                    liquid.style.height = '44%';
+                    liquid.style.backgroundColor = 'rgba(254, 249, 195, 0.45)';
+                    obs.textContent = 'Асқазан сөлі қосылды. Енді қоспаны аса сақтықпен қыздырыңыз.';
+                } else if (!s.alkali30) {
+                    liquid.style.height = '44%';
+                    liquid.style.backgroundColor = 'rgba(250, 204, 21, 0.82)';
+                    precip.className = 'precipitate-layer yellow-coag';
+                    precip.style.height = '24%';
+                    obs.textContent = 'Қыздырғанда САРЫ түске боялған нәруыз тұнбасы/түсі түзілді. Суытып, 10 тамшы 30%-тік NaOH қосыңыз!';
+                    molAnimMode = 'aromatic_yellow';
+                    molBadge.textContent = 'Сары нитротуынды';
+                } else {
+                    liquid.style.height = '62%';
+                    liquid.style.backgroundColor = 'rgba(234, 88, 12, 0.88)';
+                    precip.className = 'precipitate-layer yellow-coag';
+                    precip.style.height = '18%';
+                    obs.textContent = '30%-тік NaOH қосқанда сары түс ҚЫЗҒЫЛТ-САРЫ / САРҒЫШ түске ауысты! Ароматты аминқышқылдарының бары расталды.';
+                    molAnimMode = 'aromatic_orange';
+                    molBadge.textContent = 'Қызғылт-сары ион';
+                }
+            }
+
+            if (activeRxn === 3) {
+                const s = rxnState[3];
+                title.textContent = '3-тапсырма: Фоль реакциясы';
+                molTitle.textContent = 'Күкіртті аминқышқылдары (Цистеин / Цистин)';
+                formula.textContent = '–CH₂–SH (Цистеин) + 30% NaOH + Pb(CH₃COO)₂ —(t°)→ PbS↓ (Қара тұнба)';
+                bioText.textContent = 'Цистеин мен цистин қалдықтары арасындағы дисульфидтік көпірлер (–S–S–) нәруыздың үшінші реттік құрылымын берік бекітеді.';
+
+                ctrl.innerHTML = `
+                    <div>
+                        <span class="text-xs font-bold uppercase text-emerald-700">3-тәжірибе: Фоль реакциясы</span>
+                        <p class="text-xs text-slate-600 mt-1">30% сілтілік гидролизде күкіртті аминқышқылдар сульфид түзіп, Pb²⁺-пен қара PbS тұнбасын береді.</p>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="rxn3Step('protein')" class="w-full p-2 rounded-xl border ${s.protein ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'bg-slate-50 border-slate-300 hover:border-emerald-500'} text-left text-xs font-bold flex justify-between">
+                            <span>1) 5 тамшы жұмыртқа нәруызы ерітіндісі</span>
+                            <span>${s.protein ? '✓' : '+ Құю'}</span>
+                        </button>
+                        <button onclick="rxn3Step('alkali30')" class="w-full p-2 rounded-xl border ${s.alkali30 ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'bg-slate-50 border-slate-300 hover:border-emerald-500'} text-left text-xs font-bold flex justify-between">
+                            <span>2) 5 тамшы 30%-тік сілті (NaOH)</span>
+                            <span>${s.alkali30 ? '✓' : '+ Қосу'}</span>
+                        </button>
+                        <button onclick="rxn3Step('lead')" class="w-full p-2 rounded-xl border ${s.leadAcetate ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'bg-slate-50 border-slate-300 hover:border-emerald-500'} text-left text-xs font-bold flex justify-between">
+                            <span>3) 2 тамшы 1%-тік Pb(CH₃COO)₂</span>
+                            <span>${s.leadAcetate ? '✓' : '+ Тамызу'}</span>
+                        </button>
+                        <button onclick="rxn3Step('boil')" class="w-full p-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition">
+                            4) Араластырып, спиртшаммен қайнату
+                        </button>
+                    </div>
+                `;
+
+                if (!s.protein) {
+                    liquid.style.height = '0%';
+                    obs.textContent = 'Сынауық бос. 5 тамшы жұмыртқа нәруызы ерітіндісін құйыңыз.';
+                    molAnimMode = 'peptide';
+                    molBadge.textContent = '–S–S– / –SH топтары';
+                } else if (!s.boiled) {
+                    liquid.style.height = s.leadAcetate ? '56%' : (s.alkali30 ? '46%' : '32%');
+                    liquid.style.backgroundColor = 'rgba(224, 242, 254, 0.42)';
+                    obs.textContent = s.leadAcetate
+                        ? 'Барлық реактив қосылды. Енді қоспаны араластырып, спиртшаммен қайнатыңыз!'
+                        : 'Реактивтерді ретімен қосып, соңында қайнатыңыз.';
+                } else {
+                    liquid.style.height = '56%';
+                    liquid.style.backgroundColor = 'rgba(30, 41, 59, 0.72)';
+                    precip.className = 'precipitate-layer pbs-dark';
+                    precip.style.height = '34%';
+                    obs.textContent = 'Қайнатқаннан кейін ҚАРА / ҚАРА ҚОШҚЫЛ түсті қорғасын сульфиді (PbS) тұнбасы түзілді! Бұл күкіртті аминқышқылдарының (цистеин, цистин) барын көрсетеді.';
+                    molAnimMode = 'sulfur_black';
+                    molBadge.textContent = 'PbS қара тұнбасы';
+                }
+            }
+
+            if (activeRxn === 4) {
+                const s = rxnState[4];
+                title.textContent = '4-тапсырма: Нингидриндеу реакциясы';
+                molTitle.textContent = 'α-аминтоптар (–NH₂)';
+                formula.textContent = 'α-аминқышқыл/нәруыз + Нингидрин —(қайнату, 2–3 мин)→ Көгілдір күлгін түс';
+                bioText.textContent = 'α-аминтоптардың тотығуы мен ыдырауы нәруыздар мен аминқышқылдарының алмасуын биохимиялық талдауда кеңінен қолданылады.';
+
+                ctrl.innerHTML = `
+                    <div>
+                        <span class="text-xs font-bold uppercase text-emerald-700">4-тәжірибе: Нингидриндеу реакциясы</span>
+                        <p class="text-xs text-slate-600 mt-1">α-аминтоптар қыздырғанда нингидринмен әрекеттесіп, 2–3 минутта көгілдір күлгін түс береді.</p>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="rxn4Step('protein1')" class="w-full p-2.5 rounded-xl border ${s.protein1pct ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'bg-slate-50 border-slate-300 hover:border-emerald-500'} text-left text-xs font-bold flex justify-between">
+                            <span>1) 5 тамшы 1%-тік жұмыртқа нәруызы</span>
+                            <span>${s.protein1pct ? '✓' : '+ Құю'}</span>
+                        </button>
+                        <button onclick="rxn4Step('ninhydrin')" class="w-full p-2.5 rounded-xl border ${s.ninhydrin ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'bg-slate-50 border-slate-300 hover:border-emerald-500'} text-left text-xs font-bold flex justify-between">
+                            <span>2) 3 тамшы 0,5%-тік нингидрин</span>
+                            <span>${s.ninhydrin ? '✓' : '+ Қосу'}</span>
+                        </button>
+                        <button onclick="rxn4Step('boil')" class="w-full p-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition">
+                            3) Қайнағанша қыздыру (2–3 мин өтуі)
+                        </button>
+                    </div>
+                `;
+
+                if (!s.protein1pct) {
+                    liquid.style.height = '0%';
+                    obs.textContent = 'Сынауық бос. 5 тамшы 1%-тік жұмыртқа нәруызы ерітіндісін құйыңыз.';
+                    molAnimMode = 'peptide';
+                    molBadge.textContent = 'α-аминтоптар';
+                } else if (!s.ninhydrin) {
+                    liquid.style.height = '34%';
+                    liquid.style.backgroundColor = 'rgba(224, 242, 254, 0.35)';
+                    obs.textContent = '1%-тік нәруыз ерітіндісі құйылды. Енді 3 тамшы 0,5%-тік нингидрин ерітіндісін қосыңыз.';
+                } else if (!s.boiled) {
+                    liquid.style.height = '46%';
+                    liquid.style.backgroundColor = 'rgba(254, 205, 211, 0.45)';
+                    obs.textContent = 'Нингидрин қосылды. Реакция жүруі үшін «Қайнағанша қыздыру» батырмасын басыңыз.';
+                } else if (!s.aged) {
+                    liquid.style.height = '46%';
+                    liquid.style.backgroundColor = 'rgba(244, 63, 94, 0.85)';
+                    obs.textContent = 'Қыздырғанда ерітінді АШЫҚ ҚЫЗЫЛ / ҚЫЗЫЛ түске боялды; 2–3 минуттан кейін КӨГІЛДІР КҮЛГІН түске ауысуда...';
+                    molAnimMode = 'ninhydrin_red';
+                    molBadge.textContent = 'Қызыл аралық күй';
+                } else {
+                    liquid.style.height = '46%';
+                    liquid.style.backgroundColor = 'rgba(79, 70, 229, 0.88)';
+                    obs.textContent = '2–3 минуттан соң түс КӨГІЛДІР КҮЛГІН түске ауысты! Бұл нәруыз құрамында α-аминтоптардың бар екенін дәлелдейді.';
+                    molAnimMode = 'ninhydrin_violet';
+                    molBadge.textContent = 'Көгілдір күлгін түс';
+                }
+            }
+        }
+
+        function rxn1Step(step) {
+            const s = rxnState[1];
+            if (step === 'protein') { s.protein = true; spawnDrop('#e0f2fe'); }
+            if (step === 'alkali10') {
+                if (!s.protein) { showToast('Алдымен нәруыз ерітіндісін құйыңыз!', 'warn'); return; }
+                s.alkali10 = true; spawnDrop('#f1f5f9');
+            }
+            if (step === 'cuso4') {
+                if (!s.alkali10) { showToast('Алдымен 10%-тік NaOH қосыңыз!', 'warn'); return; }
+                s.cuso4 = true; spawnDrop('#0284c7');
+            }
+            if (step === 'mix') {
+                if (!s.cuso4) { showToast('Алдымен 1%-тік CuSO₄ қосыңыз!', 'warn'); return; }
+                s.mixed = true;
+                s.done = true;
+                markRxnCompleted(1);
+                document.getElementById('tubeWrapper')?.classList.add('shaking');
+                showToast('Биурет реакциясы: қызыл күлгін түс түзілді!', 'success');
+            }
+            renderReactionScene();
+        }
+
+        function rxn2Step(step) {
+            const s = rxnState[2];
+            if (step === 'protein') { s.protein = true; spawnDrop('#e0f2fe'); }
+            if (step === 'gastric') {
+                if (!s.protein) { showToast('Алдымен нәруыз ерітіндісін құйыңыз!', 'warn'); return; }
+                s.gastric = true; spawnDrop('#fef08a');
+            }
+            if (step === 'heat') {
+                if (!s.gastric) { showToast('Алдымен асқазан сөлін қосыңыз!', 'warn'); return; }
+                igniteFlame(1500);
+                setTimeout(() => {
+                    s.heatedYellow = true;
+                    renderReactionScene();
+                    showToast('Сары түс/тұнба түзілді. Суытып, 30% NaOH қосыңыз!', 'success');
+                }, 900);
+            }
+            if (step === 'alkali30') {
+                if (!s.heatedYellow) { showToast('Алдымен қоспаны қыздырып, сары түс алыңыз!', 'warn'); return; }
+                spawnDrop('#fed7aa');
+                s.alkali30 = true;
+                s.done = true;
+                markRxnCompleted(2);
+                showToast('Сары түс қызғылт-сары / сарғыш түске ауысты!', 'success');
+            }
+            renderReactionScene();
+        }
+
+        function rxn3Step(step) {
+            const s = rxnState[3];
+            if (step === 'protein') { s.protein = true; spawnDrop('#e0f2fe'); }
+            if (step === 'alkali30') {
+                if (!s.protein) { showToast('Алдымен нәруыз ерітіндісін құйыңыз!', 'warn'); return; }
+                s.alkali30 = true; spawnDrop('#f1f5f9');
+            }
+            if (step === 'lead') {
+                if (!s.alkali30) { showToast('Алдымен 30%-тік сілті қосыңыз!', 'warn'); return; }
+                s.leadAcetate = true; spawnDrop('#cbd5e1');
+            }
+            if (step === 'boil') {
+                if (!s.leadAcetate) { showToast('Алдымен қорғасын ацетатын қосыңыз!', 'warn'); return; }
+                document.getElementById('tubeWrapper')?.classList.add('shaking');
+                igniteFlame(1600);
+                setTimeout(() => {
+                    s.boiled = true;
+                    s.done = true;
+                    markRxnCompleted(3);
+                    renderReactionScene();
+                    showToast('Қара түсті PbS тұнбасы түзілді (Фоль реакциясы)!', 'success');
+                }, 1000);
+            }
+            renderReactionScene();
+        }
+
+        function rxn4Step(step) {
+            const s = rxnState[4];
+            if (step === 'protein1') { s.protein1pct = true; spawnDrop('#e0f2fe'); }
+            if (step === 'ninhydrin') {
+                if (!s.protein1pct) { showToast('Алдымен 1%-тік нәруыз ерітіндісін құйыңыз!', 'warn'); return; }
+                s.ninhydrin = true; spawnDrop('#fecdd3');
+            }
+            if (step === 'boil') {
+                if (!s.ninhydrin) { showToast('Алдымен 0,5%-тік нингидрин ерітіндісін қосыңыз!', 'warn'); return; }
+                igniteFlame(2000);
+                setTimeout(() => {
+                    s.boiled = true;
+                    renderReactionScene();
+                    showToast('Ашық қызыл / қызыл түс пайда болды (2–3 мин өтуде)...', 'info');
+                }, 700);
+                setTimeout(() => {
+                    s.aged = true;
+                    s.done = true;
+                    markRxnCompleted(4);
+                    renderReactionScene();
+                    showToast('2–3 мин өткен соң көгілдір күлгін түске ауысты!', 'success');
+                }, 1900);
+            }
+            renderReactionScene();
+        }
+
+        // =====================================================================
+        // 4. МОЛЕКУЛАЛЫҚ СХЕМА АНИМАЦИЯСЫ (CANVAS)
+        // =====================================================================
+        function initBioMoleculeCanvas() {
+            const canvas = document.getElementById('bioMoleculeCanvas');
+            const ctx = canvas.getContext('2d');
+            let phase = 0;
+
+            function resize() {
+                const r = canvas.getBoundingClientRect();
+                if (r.width > 0 && r.height > 0) {
+                    canvas.width = r.width * window.devicePixelRatio;
+                    canvas.height = r.height * window.devicePixelRatio;
+                }
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            function draw() {
+                phase += 0.04;
+                const dpr = window.devicePixelRatio || 1;
+                const w = canvas.width / dpr;
+                const h = canvas.height / dpr;
+
+                ctx.save();
+                ctx.scale(dpr, dpr);
+                ctx.clearRect(0, 0, w, h);
+
+                const midY = h / 2;
+                const count = 6;
+                const spacing = (w - 60) / (count - 1);
+
+                // Полипептид тізбегінің негізгі сызығы
+                ctx.strokeStyle = '#34d399';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                for (let i = 0; i < count; i++) {
+                    const x = 30 + i * spacing;
+                    const y = midY - 12 + Math.sin(phase + i * 0.9) * 8;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+
+                // Аминқышқыл қалдықтары және функционалдық топтар
+                for (let i = 0; i < count; i++) {
+                    const x = 30 + i * spacing;
+                    const y = midY - 12 + Math.sin(phase + i * 0.9) * 8;
+
+                    // Пептидтік байланыс нүктесі (Биурет реакциясы үшін ерекшеленеді)
+                    let nodeColor = '#2dd4bf';
+                    let sideColor = '#94a3b8';
+
+                    if (molAnimMode === 'biuret_violet') {
+                        nodeColor = '#c026d3';
+                        sideColor = '#e879f9';
+                    } else if (molAnimMode === 'aromatic_yellow') {
+                        sideColor = '#facc15';
+                    } else if (molAnimMode === 'aromatic_orange') {
+                        sideColor = '#f97316';
+                    } else if (molAnimMode === 'sulfur_black') {
+                        sideColor = i % 2 === 0 ? '#1e293b' : '#475569';
+                    } else if (molAnimMode === 'ninhydrin_red') {
+                        nodeColor = i === 0 ? '#f43f5e' : '#2dd4bf';
+                    } else if (molAnimMode === 'ninhydrin_violet') {
+                        nodeColor = i === 0 ? '#6366f1' : '#8b5cf6';
+                    }
+
+                    // Тізбек түйіні
+                    ctx.fillStyle = nodeColor;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 7, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Радикал / Функционалдық тармақ
+                    const radY = y + 36 + Math.cos(phase + i) * 5;
+                    ctx.strokeStyle = sideColor;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y + 7);
+                    ctx.lineTo(x, radY - 6);
+                    ctx.stroke();
+
+                    ctx.fillStyle = sideColor;
+                    ctx.beginPath();
+                    ctx.arc(x, radY, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+                requestAnimationFrame(draw);
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        // =====================================================================
+        // 5. НӘТИЖЕЛЕР КЕСТЕСІ ЖӘНЕ ТЕСТ
+        // =====================================================================
+        function renderResultsTable() {
+            const rows = [
+                {
+                    num: 1,
+                    condOpts: ['5 тамшы нәруыз + 10 тамшы 10% NaOH + 1–2 тамшы 1% CuSO₄', 'Тек су + қант ерітіндісі', 'Йод ерітіндісі + крахмал'],
+                    obsOpts: ['Қызыл күлгін түс пайда болады', 'Көкшіл-қара тұнба түзіледі', 'Түссіз газ бөлінеді'],
+                    courseOpts: ['Сілтілік ортада пептидтік байланыстар (–CO–NH–) Cu²⁺-пен кешен түзеді', 'Крахмал спиртке ыдырайды', 'Май сабынданады'],
+                    concOpts: ['Нәруызда пептидтік байланыс бар', 'Крахмал бар екені анықталды', 'Май бар екені анықталды'],
+                    ans: [0, 0, 0, 0]
+                },
+                {
+                    num: 2,
+                    condOpts: ['5 тамшы нәруыз + 3–4 тамшы асқазан сөлі, қыздыру, суытып + 10 тамшы 30% NaOH', 'Тек бөлме температурасында тұз қосу', 'Спиртпен шайқау'],
+                    obsOpts: ['Сары түс/тұнба → 30% NaOH қосқанда қызғылт-сары / сарғыш түске ауысады', 'Күлгін тұнба түзіледі', 'Өзгеріс болмайды'],
+                    courseOpts: ['Ароматты аминқышқылдарының (фенилаланин, тирозин, триптофан) нитрленуі', 'Пептидтік тізбектің толық гидролизі', 'Көмірсудың тотығуы'],
+                    concOpts: ['Ароматты аминқышқылдық қалдықтар бар', 'Глюкоза бар', 'Тек су бар'],
+                    ans: [0, 0, 0, 0]
+                },
+                {
+                    num: 3,
+                    condOpts: ['5 тамшы нәруыз + 5 тамшы 30% сілті + 2 тамшы 1% Pb(CH₃COO)₂, қайнату', 'Суық суда еріту', 'Фенолфталеин қосу'],
+                    obsOpts: ['Қара немесе қара қошқыл түсті қорғасын сульфиді (PbS) тұнбасы түзіледі', 'Таңқурай түс пайда болады', 'Тұнба еріп кетеді'],
+                    courseOpts: ['Күкіртті аминқышқылдар (цистеин, цистин) сілтілік гидролизде сульфид түзіп, Pb²⁺-пен PbS береді', 'Азот бөлінеді', 'Оттек жиналады'],
+                    concOpts: ['Күкіртті аминқышқылдар (цистеин/цистин) бар', 'Липидтер бар', 'Целлюлоза бар'],
+                    ans: [0, 0, 0, 0]
+                },
+                {
+                    num: 4,
+                    condOpts: ['5 тамшы 1% нәруыз + 3 тамшы 0,5% нингидрин, қайнағанша қыздыру (2–3 мин)', 'Тек мұздай күйде қалдыру', 'Тұз қышқылын құю'],
+                    obsOpts: ['Ашық қызыл/қызыл → 2–3 мин соң көгілдір күлгін түске боялады', 'Ақ бұлт пайда болады', 'Түссізденеді'],
+                    courseOpts: ['α-күйіндегі аминтоптар тотығып, ыдырап, нингидринмен көгілдір күлгін қосылыс түзеді', 'Нуклеин қышқылы бөлінеді', 'Крабын түсі өзгереді'],
+                    concOpts: ['Нәруызда α-аминтоптар бар', 'Май қышқылы жоқ', 'Тек су бар'],
+                    ans: [0, 0, 0, 0]
+                }
+            ];
+
+            const tbody = document.getElementById('resultsTableBody');
+            tbody.innerHTML = rows.map(r => `
+                <tr id="tbl-row-${r.num}">
+                    <td class="py-3 px-3 font-bold text-slate-800">${r.num}</td>
+                    <td class="py-3 px-3">
+                        <select id="r${r.num}-c1" class="w-full rounded-lg border border-slate-300 p-1.5 text-xs bg-white">
+                            <option value="">— Таңдаңыз —</option>
+                            ${r.condOpts.map((o, idx) => `<option value="${idx}">${o}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="py-3 px-3">
+                        <select id="r${r.num}-c2" class="w-full rounded-lg border border-slate-300 p-1.5 text-xs bg-white">
+                            <option value="">— Таңдаңыз —</option>
+                            ${r.obsOpts.map((o, idx) => `<option value="${idx}">${o}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="py-3 px-3">
+                        <select id="r${r.num}-c3" class="w-full rounded-lg border border-slate-300 p-1.5 text-xs bg-white">
+                            <option value="">— Таңдаңыз —</option>
+                            ${r.courseOpts.map((o, idx) => `<option value="${idx}">${o}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="py-3 px-3">
+                        <select id="r${r.num}-c4" class="w-full rounded-lg border border-slate-300 p-1.5 text-xs bg-white">
+                            <option value="">— Таңдаңыз —</option>
+                            ${r.concOpts.map((o, idx) => `<option value="${idx}">${o}</option>`).join('')}
+                        </select>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function verifyResultsTable() {
+            let correctRows = 0;
+            for (let r = 1; r <= 4; r++) {
+                const v1 = document.getElementById(`r${r}-c1`).value;
+                const v2 = document.getElementById(`r${r}-c2`).value;
+                const v3 = document.getElementById(`r${r}-c3`).value;
+                const v4 = document.getElementById(`r${r}-c4`).value;
+                const rowEl = document.getElementById(`tbl-row-${r}`);
+
+                if (v1 === '0' && v2 === '0' && v3 === '0' && v4 === '0') {
+                    correctRows++;
+                    rowEl.className = 'bg-emerald-50/70';
+                } else {
+                    rowEl.className = 'bg-rose-50/50';
+                }
+            }
+
+            tableScore = correctRows;
+            document.getElementById('badgeTable').textContent = `Кесте: ${correctRows}/4`;
+            const msg = document.getElementById('tableCheckMsg');
+            msg.classList.remove('hidden');
+
+            if (correctRows === 4) {
+                msg.className = 'p-3 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300';
+                msg.textContent = 'Өте жақсы! 4 түсті реакция бойынша кесте толық әрі дұрыс толтырылды (4/4).';
+                showToast('Нәтижелер кестесі дұрыс толтырылды!', 'success');
+            } else {
+                msg.className = 'p-3 rounded-xl text-xs sm:text-sm font-semibold bg-amber-50 text-amber-900 border border-amber-300';
+                msg.textContent = `4 реакцияның ${correctRows}-еуі толық дұрыс. Қалған жолдарды тәжірибе барысына сүйеніп тексеріңіз.`;
+            }
+        }
+
+        function renderBioQuiz() {
+            const box = document.getElementById('bioQuizContainer');
+            box.innerHTML = BIO_QUIZ.map(item => `
+                <div id="box-${item.id}" class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <p class="text-xs sm:text-sm font-bold text-slate-800">${item.q}</p>
+                    <div class="space-y-1.5 text-xs sm:text-sm text-slate-700">
+                        ${item.options.map((opt, idx) => `
+                            <label class="flex items-start gap-2 cursor-pointer p-1 rounded hover:bg-white">
+                                <input type="radio" name="${item.id}" value="${idx}" class="mt-0.5 text-emerald-600">
+                                <span>${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function evaluateBioQuiz() {
+            let score = 0;
+            let answered = 0;
+            BIO_QUIZ.forEach(item => {
+                const sel = document.querySelector(`input[name="${item.id}"]:checked`);
+                const box = document.getElementById(`box-${item.id}`);
+                if (sel) {
+                    answered++;
+                    if (parseInt(sel.value, 10) === item.correct) {
+                        score++;
+                        box.className = 'p-4 rounded-xl bg-emerald-50 border border-emerald-300 space-y-2';
+                    } else {
+                        box.className = 'p-4 rounded-xl bg-rose-50 border border-rose-300 space-y-2';
+                    }
+                }
+            });
+
+            if (answered < BIO_QUIZ.length) {
+                showToast('Барлық 5 тест сұрағына жауап беріңіз!', 'warn');
+                return;
+            }
+
+            quizScore = score;
+            document.getElementById('badgeQuiz').textContent = `Тест: ${score}/5`;
+            const res = document.getElementById('bioQuizResult');
+            res.classList.remove('hidden');
+            res.className = 'p-3.5 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-50 text-emerald-900 border border-emerald-300';
+            res.textContent = `Тест нәтижесі: ${score} / 5 ұпай. Жалпы жинақталған балл: ${tableScore + quizScore} / 9 (Тәжірибелер: ${completedRxns.size}/4).`;
+            showToast(`Тест аяқталды: ${score}/5!`, 'success');
+        }
+
+        // =====================================================================
+        // 6. ОҚУШЫ — МҰҒАЛІМ НӘТИЖЕСІН АЛМАСУ ЖӘНЕ МҰҒАЛІМ ПАНЕЛІ
+        // =====================================================================
+        function buildShareCode() {
+            const name = encodeURIComponent(document.getElementById('studentFullName').value.trim() || 'Оқушы');
+            const cls = encodeURIComponent(document.getElementById('studentClassName').value.trim() || '11 «Б»');
+            return `BIO3-${name}|${cls}|${completedRxns.size}|${tableScore}|${quizScore}`;
+        }
+
+        function openSubmissionModal() {
+            const name = document.getElementById('studentFullName').value.trim() || 'Аты-жөні көрсетілмеген';
+            const cls = document.getElementById('studentClassName').value.trim() || '11 «Б»';
+            const total = tableScore + quizScore;
+            const code = buildShareCode();
+
+            document.getElementById('submissionTextBox').textContent = [
+                '11-СЫНЫП БИОЛОГИЯ • 3-ЗЕРТХАНАЛЫҚ ЖҰМЫС',
+                `Оқушы: ${name} (${cls})`,
+                `Орындалған реакциялар: ${completedRxns.size} / 4`,
+                `Кесте + Тест ұпайы: ${total} / 9`,
+                `Алмасу коды: ${code}`
+            ].join('\n');
+
+            openModal('submissionModal');
+        }
+
+        function copySubmissionText() {
+            const txt = document.getElementById('submissionTextBox').textContent;
+            const ta = document.createElement('textarea');
+            ta.value = txt;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast('Есеп пен алмасу коды көшірілді!', 'success');
+        }
+
+        function sendSubmissionToTeacher() {
+            const name = document.getElementById('studentFullName').value.trim() || 'Жаңа оқушы';
+            const cls = document.getElementById('studentClassName').value.trim() || '11 «Б»';
+            const total = tableScore + quizScore;
+            const pct = Math.round((total / 9) * 100);
+            const mark = pct >= 85 ? '5' : (pct >= 65 ? '4' : '3');
+
+            TEACHER_STUDENTS.unshift({
+                name: name,
+                cls: cls,
+                rxns: `${completedRxns.size}/4`,
+                pts: `${total}/9`,
+                grade: `${mark} (${pct}%)`,
+                note: 'Жаңа жіберілген жұмыс'
+            });
+
+            closeModal('submissionModal');
+            showToast('Жұмыс Мұғалім режиміне жіберілді!', 'success');
+        }
+
+        function importStudentCode() {
+            const raw = document.getElementById('importCodeInput').value.trim();
+            if (!raw.startsWith('BIO3-')) {
+                showToast('Код «BIO3-...» форматында болуы керек.', 'warn');
+                return;
+            }
+            const parts = raw.replace('BIO3-', '').split('|');
+            if (parts.length < 5) {
+                showToast('Код құрылымы толық емес.', 'warn');
+                return;
+            }
+            const name = decodeURIComponent(parts[0]);
+            const cls = decodeURIComponent(parts[1]);
+            const rxns = `${parts[2]}/4`;
+            const total = (parseInt(parts[3], 10) || 0) + (parseInt(parts[4], 10) || 0);
+            const pct = Math.round((total / 9) * 100);
+            const mark = pct >= 85 ? '5' : (pct >= 65 ? '4' : '3');
+
+            TEACHER_STUDENTS.unshift({
+                name,
+                cls,
+                rxns,
+                pts: `${total}/9`,
+                grade: `${mark} (${pct}%)`,
+                note: 'Код арқылы қосылды'
+            });
+
+            document.getElementById('importCodeInput').value = '';
+            renderTeacherTable();
+            showToast(`${name} нәтижесі тізімге қосылды!`, 'success');
+        }
+
+        function renderTeacherTable() {
+            const tbody = document.getElementById('teacherSubmissionsBody');
+            tbody.innerHTML = TEACHER_STUDENTS.map((st, idx) => `
+                <tr>
+                    <td class="py-3 px-4 font-bold text-slate-900">${st.name}</td>
+                    <td class="py-3 px-4 text-slate-600">${st.cls}</td>
+                    <td class="py-3 px-4 font-semibold text-emerald-700">${st.rxns}</td>
+                    <td class="py-3 px-4 font-semibold">${st.pts}</td>
+                    <td class="py-3 px-4">
+                        <span class="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">${st.grade}</span>
+                        <input type="text" value="${st.note}" onchange="updateTeacherNote(${idx}, this.value)" class="mt-1 block w-full rounded border border-slate-200 px-2 py-1 text-xs text-slate-700" placeholder="Түзету / пікір...">
+                    </td>
+                    <td class="py-3 px-4">
+                        <button onclick="boostGrade(${idx})" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition">
+                            Бағаны растау
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateTeacherNote(idx, val) {
+            TEACHER_STUDENTS[idx].note = val;
+            showToast('Түзету/пікір сақталды.', 'info');
+        }
+
+        function boostGrade(idx) {
+            showToast(`${TEACHER_STUDENTS[idx].name} жұмысы тексеріліп, бағасы бекітілді (${TEACHER_STUDENTS[idx].grade}).`, 'success');
+        }
+
+        function downloadClassCSV() {
+            const lines = [
+                ['Оқушының аты-жөні', 'Сыныбы', 'Реакциялар', 'Ұпай (9)', 'Баға', 'Ескертпе'],
+                ...TEACHER_STUDENTS.map(s => [s.name, s.cls, s.rxns, s.pts, s.grade, s.note])
+            ];
+            const csv = '\uFEFF' + lines.map(r => r.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '11_synyp_biologiya_3_zertkhanalyk_zhumys.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Сынып нәтижелері CSV файлына сақталды!', 'success');
+        }
+
+        // Бастапқы іске қосу
+        window.onload = function() {
+            selectReaction(1);
+            renderResultsTable();
+            renderBioQuiz();
+            initBioMoleculeCanvas();
+        };
+    </script>
+</body>
+</html>
